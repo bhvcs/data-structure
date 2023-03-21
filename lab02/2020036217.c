@@ -95,9 +95,9 @@ List MakeEmpty(List L){
 	L -> next = NULL;
 	return L;
 /*
- * malloc을 사용해 새로운 list를 할당받고
- * 그 리스트는 헤더가 될 것이니 element가 -1
- * , 아직 또 다른 요소는 없으니 next는 NULL을 가리키도록 한 후 그 리스트의 포인터를 반환*/
+ * malloc을 사용해 동적할당으로 새로운 리스트 L을 생성하고
+ * 그 L은 헤더가 될 것이니 element가 -1
+ * , 아직 또 다른 요소는 없으니 next는 NULL을 가리키도록 한 후 그 리스트 포인터를 반환*/
 /*
 Make new header
 element should be -1
@@ -109,7 +109,7 @@ return:
 int IsEmpty(List L){
 	return L->next == NULL;
 /*
- * 비어있다면 헤더의 next가 NULL이어야 한다.
+ * 비어있다면 헤더(L)의 next가 NULL이어야 한다.
  * 그래서 헤더의 next가 NULL이면 1을, 아니라면 0을 반환하도록 한다.*/
 /*
 Check if list L is empty or not
@@ -132,14 +132,14 @@ return:
 */
 }
 void Insert(ElementType X, List L, Position P){
-	List list = (List)malloc(sizeof(struct Node));
-	list -> element = X;
-	list->next = P->next;
-	P->next = list;
+	Position Q = (Position)malloc(sizeof(struct Node));
+	Q -> element = X;
+	Q->next = P->next;
+	P->next = Q;
 /*
- * 새로운 list를 만들어서 그 리스트에 전달 받은 X를 넣고 그 새로운 리스트는 전달 받은 위치 P
- * 다음의 리스트가 될 것이므로 기존의 P의 next위치를 list의 next가 받게 되고, P 다음 위치에 배치 되었으므로
- * P의 next를 list가 받는다.*/
+ * 새로운 노드를 만들어서 그 노드에 전달 받은 X를 넣고 그 새로운 노드는 전달 받은 위치 P
+ * 다음의 노드가 될 것이므로 기존의 P의 next위치를 Q의 next가 받게 되고, P 다음 위치에 배치 되었으므로
+ * P의 next를 Q가 받는다.*/
 /*
 Insert X in position P of list L
 */
@@ -184,7 +184,7 @@ Position FindPrevious(ElementType X, List L){
 	}
 	return p;
 /*
- * L의 위치를 p에 저장하고 while문 안에서 next로 다음 리스트의 element가 X와 같아질 때까지 이동한다. 이때
+ * L의 위치를 p에 저장하고 while문 안에서 next로 다음 노드의 element가 X와 같아질 때까지 이동한다. 이때
  * 다음 위치가 마지막 노드라면 while문을 빠져나올 수 있도록 한다. 찾았다면 해당 노드의 직전 노드의 위치가
  * p에 있을 것이고 그 p를 반환한다.
 Find the previous node of the node with the given element X in List L
@@ -200,7 +200,7 @@ Position Find(ElementType X, List L){
 	}
 	return p;
 /*
- * L을 p에 저장하고 while문 안에서 리스트의 element가 X가 될 때까지 next로 이동한다. 찾게 되면 p가 해당 위치일 것이고 그 p를 반환한다. 이때 X를 못 찾았다면 p는 NULL이 되어 반환된다.
+ * L을 p에 저장하고 while문 안에서 노드의 element가 X가 될 때까지 next로 이동한다. 찾게 되면 p가 해당 위치일 것이고 그 p를 반환한다. 이때 X를 못 찾았다면 p는 NULL이 되어 반환된다.
 Find the node with the given element X in List L
 return:
 	the pointer of node has element X
@@ -216,7 +216,7 @@ void Delete(ElementType X, List L){
 		free(q);
 	}
 /*
- * linkedList에서 X를 element로 갖는 리스트의 직전 리스트의 위치를 p에 준다. 이때 X를 못 찾는다면 마지막 리스트의 위치가 반환될 것이므로 마지막 위치의 리스트가 아닐 때 기능을 실행하도록 if문을 설계한다. 삭제되어야 하는 노드는 p->next이고 중간에 이 노드가 없어지면 p의 next가 기존의 p->next->next를 가리켜야 하기 때문에 p->next를 q에 저장해 놓고 앞서 말한대로 삭제하고자 하는 노드의 전, 후 노드를 연결 시켜준다. 그리고 q를 없앤다.
+ * linkedList에서 X를 element로 갖는 노드의 직전 노드의 위치를 p에 준다. 이때 X를 못 찾는다면 마지막 노드의 위치가 반환될 것이므로 마지막 위치의 노드가 아닐 때 기능을 실행하도록 if문을 설계한다. 삭제되어야 하는 노드는 p->next이고 중간에 이 노드가 없어지면 p의 next가 기존의 p->next->next를 가리켜야 하기 때문에 p->next를 q에 저장해 놓고 앞서 말한대로 삭제하고자 하는 노드의 전, 후 노드를 연결 시켜준다. 그리고 q를 없앤다.
 Delete the node that has element X in List L
 */
 }
@@ -230,7 +230,7 @@ void DeleteList(List L){
 		p = q;
 	}
 /*
- * 시작 지점(L)을 p에 저장하고 while문 안에서 next로 이동하면서 각 리스트 없앤다. 이때 다음 리스트로 넘어가기 
+ * 시작 지점(L)을 p에 저장하고 while문 안에서 next로 이동하면서 각 노드를 없앤다. 이때 다음 노드로 넘어가기 
  * 위해 삭제하기 전에 새로운 Position q에 p 다음 위치를 저장한 후, 삭제한 다음 다시 p에 q를 저장한다.
 Delete the List
 */
