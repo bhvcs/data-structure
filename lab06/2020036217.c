@@ -68,7 +68,7 @@ AVLTree Insert(ElementType X, AVLTree T){
 				T = SingleRotateWithRight(T);
 			}else T = DoubleRotateWithRight(T);
 		}
-	}else{
+	}else{//이미 존재하는 경우
 		fprintf(fout, "insertion error : %d is already in the tree!\n", X);
 	}
 	T->height = Max(Height(T->left), Height(T->right)) + 1;
@@ -84,11 +84,10 @@ print out:
 *X에 맞는 노드를 먼저 찾아야 하기 때문에 insert의 로직과 유사하게 X를 찾아간다. 만약 해당 노드가 NULL이라면 트리 안에 없다는 것이고 deletion error을 출력하게 한다. 찾았다면 삭제를 해야하는데 노드가 0개이면 그냥 삭제하고 1개이면 자식 노드를 삭제한 노드가 있는 위치에 두어야 한다. 2개를 삭제할 때에는 오른쪽 서브트리에서 가장 작은 값을 찾아 삭제하고자하는 노드의 element만 바꾸고 다시 오른쪽 서브트리부터 Delete를 재귀적으로 호출한다. 그렇게 해서 바뀌어진 노드가 있던 위치를 삭제한다. 삭제를 끝낸 후 return 되면서 root까지 올라가는데 도중 height의 차이가 2이상인 곳을 찾고 찾은 곳에서 왼쪽 자식과 오른쪽 자시의 height를 비교해 큰 쪽을 기준으로 해서 left-left/right, right-right/left를 판별한다. 각 위치관계에 맞는 rotation을 호출해서 밸런스를 맞춰주고 다시 root까지 올라간다.
 */
 AVLTree Delete(ElementType X, AVLTree T){
-	if(T == NULL){
+	if(T == NULL){//못 찾은 경우
 		fprintf(fout, "deletion error : %d is not in the tree!\n", X);
 	}else if( X < T->element){
 		T->left = Delete(X, T->left);
-		//여기서 rebalancing이 있으면 안되나?
 	}else if( X > T->element){
 		T->right = Delete(X, T->right);
 	}
@@ -110,16 +109,16 @@ AVLTree Delete(ElementType X, AVLTree T){
 		T->right = Delete(X, T->right);
 	}
 	if(T){
-		T->height = Max(Height(T->left), Height(T->right)) + 1;
+		T->height = Max(Height(T->left), Height(T->right)) + 1;//높이 재조정
 		if(Height(T->left)-Height(T->right) >= 2){
 			AVLTree tmp = T->left;
-			if(Height(tmp->left) >= Height(tmp->right)){//TODO: 부등호 확인
+			if(Height(tmp->left) >= Height(tmp->right)){
 				T = SingleRotateWithLeft(T);
 			}else T = DoubleRotateWithLeft(T);
 		}
 		else if(Height(T->right)-Height(T->left) >= 2){
 			AVLTree tmp = T->right;
-			if(Height(tmp->right) >= Height(tmp->left)){//TODO: 부등호 확인
+			if(Height(tmp->right) >= Height(tmp->left)){
 				T = SingleRotateWithRight(T);
 			}else T = DoubleRotateWithRight(T);
 		}
@@ -132,7 +131,7 @@ Pre order Traversal
 * Preorder방식으로 출력하는 것은 자신 왼쪽 자식 오른쪽 자식 순으로 출력하는 것이므로 T가 null이 아닐때 일단 출력하여 자신을 print해주고 왼쪽 자식을 가지고 PrintPreorder을 재귀적으로 호출한다. 왼쪽 자식을 봤으면 오른쪽 자식도 볼 수 있도록 밑에 오른쪽 자식으로 함수를 호출하게 한다.
 */
 void PrintPreorder(AVLTree T){
-	if(T !=NULL ){
+	if(T != NULL ){
 		fprintf(fout, "%d(%d) ", T->element, Height(T));
 		PrintPreorder(T->left);
 		PrintPreorder(T->right);
@@ -148,12 +147,7 @@ void DeleteTree(AVLTree T){
 	if(T != NULL){	
 		DeleteTree(T->left);
 		DeleteTree(T->right);
-		//printf("d%d ", T->element);
 		free(T);
-		T = NULL;
-		/*if(T==NULL){
-			printf("검증\n");
-		}*/
 	}
 }
 /*
