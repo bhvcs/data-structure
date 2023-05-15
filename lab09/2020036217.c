@@ -1,208 +1,225 @@
 #include<stdio.h>
 #include<stdlib.h>
-#define INF 1e9
-
 
 FILE *fin;
 FILE *fout;
 
-typedef struct HeapStruct{
-	int Capacity;
-	int Size;
-	int *Elements;
-}Heap;
+typedef struct BNode* BNodePtr;
 
-Heap* CreateHeap(int heapSize);
-int Insert(Heap *heap, int value);
-int Find(Heap *heap, int value);
-int DeleteMax(Heap* heap);
-int* GetElements(Heap* heap);
-int IsFull(Heap *heap);
-int IsEmpty(Heap *heap);
-int Size(Heap *heap);
+struct BNode{
+    int order;
+    int size;           /* number of children */
+    BNodePtr *child;    /* children pointers */
+    int *key;           /* keys */
+    int is_leaf;
+}BNode;
 
-void swap(int* a, int* b){
-	int t = *a;
-	*a = *b;
-	*b = t;
-}
+BNodePtr CreateTree(int order);
+
+void Insert(BNodePtr *root, int key);
+
+int Find(BNodePtr root, int key);
+
+void PrintTree(BNodePtr root);
+
+void DeleteTree(BNodePtr root);
+
+int keysLength(BNodePtr root);
 
 int main(int argc, char* argv[]){
-	fin = fopen(argv[1], "r");
-	fout = fopen(argv[2], "w");
+    fin = fopen(argv[1], "r");
+    fout = fopen(argv[2], "w");
 
-	char cv;
-	Heap* maxHeap;
-	int heapSize, key, max_element;
-	int ret;
-	int* elements;
-	while(!feof(fin)){
-		fscanf(fin, "%c", &cv);
-		switch(cv){
-			case 'n':
-				fscanf(fin, "%d", &heapSize);
-				maxHeap = CreateHeap(heapSize);
-				break;
-			case 'i':
-				fscanf(fin, "%d", &key);
-				ret = Insert(maxHeap, key);
-				if(ret == 0) fprintf(fout, "insert %d\n", key);
-				else if(ret == 1) fprintf(fout, "insert error : heap is full\n");
-				else if(ret == 2) fprintf(fout, "insert error : %d is already in the heap\n", key);
-				else {
-					fprintf(fout, "error: unknown return type\n");
-					return -1;
-				}
+    int order;
+    fscanf(fin, "%d", &order);
+    BNodePtr root = CreateTree(order);
 
-				break;
-			case 'd':
-				max_element = DeleteMax(maxHeap);
-				if(max_element == 0){
-					fprintf(fout, "delete error : heap is empty\n");
+    char cv;
+    int key;
+    while(!feof(fin)){
+        fscanf(fin, "%c", &cv);
+        switch(cv){
+            case 'i':
+                fscanf(fin, "%d", &key);
+                if(Find(root, key))
+                    fprintf(fout, "insert error : key %d is already in the tree!\n", key);
+                else
+                    Insert(&root, key);
+		printf("%d\n", root->key[0]);
+                break;
+            case 'f':
+                fscanf(fin, "%d", &key);
+                if(Find(root, key))
+                    fprintf(fout, "key %d found\n", key);
+                else
+                    fprintf(fout, "finding error : key %d is not in the tree!\n", key);
+		printf("%d\n", root->key[0]);
+                break;
+            case 'p':
+                if (root->size == 1)
+                    fprintf(fout, "print error : tree is empty!");
+                else
+                    PrintTree(root);
+                fprintf(fout, "\n");
+		printf("%d\n", root->key[0]);
+                break;
+        }
+    }
+   
+    DeleteTree(root);
+    PrintTree(root);
+    fclose(fin);
+    fclose(fout);
 
-				}else if(max_element > 0){
-					fprintf(fout, "max element : %d deleted\n", max_element);
-				}
-				break;
-			case 'p':
-				if(IsEmpty(maxHeap)){
-					fprintf(fout, "print error : heap is empty\n");
-				}else{
-					elements = GetElements(maxHeap);
-					int size = Size(maxHeap);
-					for(int i = 0; elements[i] > -1 && i < size; i++){
-						fprintf(fout, "%d ", elements[i]);
-					}
-					fprintf(fout, "\n");
-					free(elements);
-				}
-				break;
-			case 'f':
-				fscanf(fin, "%d", &key);
-				if(Find(maxHeap, key)) fprintf(fout, "%d is in the heap\n", key);
-				else fprintf(fout, "finding error : %d is not in the heap\n", key);
-				break;
-		}
-	}
-
-	return 0;
+    return 0;
 }
 
 /*
-Create new heap with given heapSize
-Element[0] should save INF
-heapSize: positive integer
-return:
-	the pointer of new heap  
-*/
-Heap* CreateHeap(int heapSize){
-	Heap* ptrHeap = (Heap*)malloc(sizeof(Heap));
-	ptrHeap->Elements = (int*)malloc(sizeof(Heap)*heapSize);
-	ptrHeap->Elements[0] = INF;
-	ptrHeap->Capacity = heapSize;
-	ptrHeap->Size = 0;
-	return ptrHeap;
+Create new BTree with given order
+order: order of BTree (order >= 2)
+return: 
+        the pointer of new BTree
+ */
+BNodePtr CreateTree(int order){
+    BNodePtr bNode = (BNodePtr)malloc(sizeof(BNode));
+    bNode->order = order;
+    bNode->size = 0;//최소 두개부터니깐
+    bNode->child = (BNodePtr*)malloc(sizeof(struct BNode) * (order+1));
+    bNode->key = (int*)malloc(sizeof(int) * order);//key는 최대 m-1개, insert의 편의를 위해 하나 늘림
+    bNode->is_leaf = 1;
 }
 
 /*
-Insert the value into Heap
-value: positive integer
-return:
-	0 , success
-	1 , heap is full
-	2 , duplicated
+Insert the key value into BTree 
+key: the key value in BTree node 
 */
-int Insert(Heap *heap, int value){
-	int i;
-	if(IsFull(heap)) return 1;
-	else if(Find(heap, value)) return 2;
-	//ap->Elements[++Size] = value; 굳이 여기엔 필요 없다는거
-	for(i = ++heap->Size; heap->Elements[i/2] < value; i /= 2){
-		printf("Insert");
-		heap->Elements[i] = heap->Elements[i/2];
-	
-	}
-	heap->Elements[i] = value;
-	return 0;
+BNodePtr split(int pos, BNodePtr node, BNodePtr parentNode){
+    int middle_pos = keysLength(node)/2, middleKey = node->key[middle_pos];
+    BNodePtr right_node = (BNodePtr)malloc(sizeof(BNode));
+    right_node->is_leaf = node->is_leaf;
+    right_node->size = 0;
+    right_node->order = node->order;
+    right_node->child = (BNodePtr*)malloc(sizeof(BNode) * (node->order+1));
+    right_node->key = (int*)malloc(sizeof(int) * node->order);
+    
+    int len = keysLength(node);
+    for(int i = middle_pos+1; i< len; i++){ // 분리할 노드에 키 담기(리프이든 아니든)
+        right_node->key[i-(middle_pos+1)] = node->key[i];
+        node->key[i] = 0;
+    }
+
+    if (!node->is_leaf){ // 현재 노드가 리프가 아니면, 자식 담기
+	    len = node->size;//확인
+            for(int i = middle_pos+1; i < len; i++){//시2발
+	    	right_node->child[i-(middle_pos+1)] = node ->child[i];
+            	right_node-> size++; // 새로 채워준 노드의 자식 개수는 증가, 현재 노드에서는 빼기
+            	node->size--;//size의 개수만큼으로 접근을 하겠다는 거지
+	    }   
+    }
+    node->key[middle_pos] = 0;
+    if(node == parentNode){//현재 노드가 루트 노드인지 확인.., node == parentNode로 할 수도 있음
+	    BNodePtr new_parent_node = CreateTree(node->order); // 중앙값 가지고 새 부모 노드 만들기
+        new_parent_node->is_leaf = 0;
+        new_parent_node->key[0] = middleKey;
+        new_parent_node->child[0] = node; // 새부모노드의 왼쪽 자식은 현재 노드
+        new_parent_node->child[1] = right_node;
+        new_parent_node->size = 2;
+        return new_parent_node; 
+    }else{
+        for (int i= keysLength(parentNode); i> pos; i--){ // 부모 노드에 넣어야되니까 거기있던 키 배치 다시하기
+            parentNode->key[i] = parentNode->key[i-1];
+            parentNode->child[i+1] = parentNode->child[i];
+        }
+
+        parentNode->key[pos]= middleKey; // 부모 노드에 넣어야될 자리에 값 넣기
+        parentNode-> child[pos+1] = right_node; // 왼쪽 노드는 원래 연결되어있으니 오른쪽만 부모노드에 연결.
+        parentNode->size++;
+    }
+    return node;
+}
+BNodePtr insertNode(int parent_pos, int key, BNodePtr node, BNodePtr parentNode){
+    int pos; // 현재 노드에서 키의 위치를 갖고 있어야 함. 왜냐면 넣으려고 하는 값의 위치를 찾아야 하기 때문.
+    for (pos =0; pos < keysLength(node); pos++ ) {// pos 위치는 0부터 해서, 현재 노드의 키 개수만큼 탐색
+	    if (key< node->key[pos]){ // val이 node의 pos번째 키보다 작으면 그 pos에서 멈춘다.
+            break;
+        }
+    }
+    
+    if(node->is_leaf==0){
+        node->child[pos] = insertNode(pos, key, node->child[pos], node);
+        if (keysLength(node) == node->order){ // 현재 노드 키 개수가 규칙에서 벗어날거같으면
+            node = split(parent_pos, node, parentNode); // 윗 방향으로 분리를 해야 함.
+        }
+    }else{
+        for(int i = keysLength(node); i > pos; i--){
+            node->key[i] = node->key[i-1];
+            //node->child[i+1] = node->child[i];//leaf인데 옮기는 이유가 뭐지
+        }//수정해볼만함
+        node->key[pos] = key;
+        if(keysLength(node) == node->order){
+            node = split(parent_pos, node, parentNode);//pos인것 같은데
+        }
+    }
+    return node;//재귀할 떄 필요한 return
+}
+void Insert(BNodePtr* root, int key){
+
+    *root = insertNode(0, key, *root, *root);
+}
+/*
+Find node that has key in BTree
+key: the key value in BTree node 
+*/
+int Find(BNodePtr root, int key){
+    for(int i = 0; i < keysLength(root); i++){
+        if(root->is_leaf == 0){
+            if(key < root->key[i]) return Find(root->child[i], key);
+            else if(key == root->key[i]) return 1;
+            if(i == keysLength(root)-1) return Find(root->child[i+1], key);
+        }else{
+            if(key == root->key[i]) return 1;
+        }
+    }
+    return 0;
+}
+
+/* 
+Print Tree, inorder traversal 
+*/
+void PrintTree(BNodePtr root){
+	if(!root) return;
+    if(root->is_leaf == 0){
+    	for(int i = 0; i < root->size; i++){
+            PrintTree(root->child[i]);
+	    if(i < keysLength(root)) fprintf(fout, "%d ", root->key[i]);
+	    continue;
+        }
+    }else{
+        for(int j = 0; j < keysLength(root); j++){
+            fprintf(fout, "%d ", root->key[j]);
+        }
+    }
 }
 
 /*
-Find the value in Heap
-return:
-	1, success
-	0, fail  
+Free memory, delete a BTree completely 
 */
-int Find(Heap* heap, int value){
-	for(int i = 1; i <= heap->Size; i++){//1부터 시작하기 때문에 heapSize와 같아질 때까지 확인해야함
-		printf("find");
-		if(heap->Elements[i] == value) return 1;
-	}
-	return 0;
+void DeleteTree(BNodePtr root){
+    for(int i = 0; i < root->size; i++){
+            //printf("%d r-s%d\n ", root->key[0], root->size);
+	    DeleteTree(root->child[i]);
+	    continue;
+    }
+    if(!root) return;
+    printf("%d r-s%d\n ", root->key[0], root->size);
+    free(root);
+   
 }
 
-/*
-Delete the maximum value in Heap
-return:
-	Max value, success
-	0, heap is empty  
-*/
-int DeleteMax(Heap* heap){
-	int child, i;
-	if(IsEmpty(heap)) return 0;
-	int maxElement = heap->Elements[1];
-	for( i = 1; 2 * i <= heap->Size; i = child){
-		child = 2 * i;
-		if(child < heap->Size && heap->Elements[child] < heap->Elements[child+1]) child++;
-		if(heap->Elements[child] < heap->Elements[heap->Size]) child = heap->Size;
-		heap->Elements[i] = heap->Elements[child];
-	}
-	heap->Size--;
-	return maxElement;
+int keysLength(BNodePtr root){
+    int length = 0;
+    for(int i = 0; i < root->order; i++){
+        if(root->key[i] > 0) length++;
+    }
+    return length;
 }
-
-/*
-Return an array of copied elements from the heap
-The length of the returned array should be the same as the size of the heap
-The order of the returned array should be the same as the order of heap->Elements  
-If heap is empty, return NULL
-***WARNING***
-Do not just return heap->Elements
-You must copy the elements to another allocated array
-*/
-int* GetElements(Heap* heap){//index 순서가 level-order이다
-	int* arr = (int*)malloc(sizeof(int) * heap->Size);
-	for(int i = 0; i < heap->Size; i++){
-		arr[i] = heap->Elements[i+1];
-	}
-	return arr;
-}
-
-/*
-check heap is full
-return:
-	1, heap is full
-	0, heap is not full
-*/
-int IsFull(Heap* heap){
-	return heap->Capacity == heap->Size;//삼항연산자보다 이게 낫다
-}
-
-/*
-check heap is empty
-return:
-	1, heap is empty
-	0, heap is not empty
-*/
-int IsEmpty(Heap *heap){
-	return heap->Size == 0;
-}
-
-/*
-get size of heap
-return:
-	size of heap
-*/
-int Size(Heap *heap){
-	return heap->Size;
-}
-
