@@ -45,7 +45,6 @@ int main(int argc, char* argv[]){
                     fprintf(fout, "insert error : key %d is already in the tree!\n", key);
                 else
                     Insert(&root, key);
-		printf("%d\n", root->key[0]);
                 break;
             case 'f':
                 fscanf(fin, "%d", &key);
@@ -53,7 +52,6 @@ int main(int argc, char* argv[]){
                     fprintf(fout, "key %d found\n", key);
                 else
                     fprintf(fout, "finding error : key %d is not in the tree!\n", key);
-		printf("%d\n", root->key[0]);
                 break;
             case 'p':
                 if (root->size == 1)
@@ -61,7 +59,6 @@ int main(int argc, char* argv[]){
                 else
                     PrintTree(root);
                 fprintf(fout, "\n");
-		printf("%d\n", root->key[0]);
                 break;
         }
     }
@@ -93,108 +90,93 @@ BNodePtr CreateTree(int order){
 Insert the key value into BTree 
 key: the key value in BTree node 
 */
-BNodePtr split(int pos, BNodePtr node, BNodePtr parentNode){
+BNodePtr split(int parent_pos, BNodePtr parent_node, BNodePtr node){
     int middle_pos = keysLength(node)/2, middleKey = node->key[middle_pos];
-    BNodePtr right_node = (BNodePtr)malloc(sizeof(BNode));
-    right_node->is_leaf = node->is_leaf;
-    right_node->size = 0;
-    right_node->order = node->order;
-    right_node->child = (BNodePtr*)malloc(sizeof(BNodePtr) * (node->order+1));
-    right_node->key = (int*)malloc(sizeof(int) * node->order);
-    
+    BNodePtr right_node = CreateTree(node->order);//CreateTree()의 order, key배열 동적할당, size, child할당이 같다.
+    right_node->is_leaf = node->is_leaf;//split이 leaf에서만 일어나는 것은 아니니 1로 해서는 안된다.
     int len = keysLength(node);
-    for(int i = middle_pos+1; i< len; i++){ // 분리할 노드에 키 담기(리프이든 아니든)
-        right_node->key[i-(middle_pos+1)] = node->key[i];
-        node->key[i] = 0;
-    }
-
-    if (!node->is_leaf){ // 현재 노드가 리프가 아니면, 자식 담기
-	    len = node->size;//확인
-            for(int i = middle_pos+1; i < len; i++){//시2발
-	    	right_node->child[i-(middle_pos+1)] = node ->child[i];
-            	right_node-> size++; // 새로 채워준 노드의 자식 개수는 증가, 현재 노드에서는 빼기
-            	node->size--;//size의 개수만큼으로 접근을 하겠다는 거지
-	    }   
-    }
-    node->key[middle_pos] = 0;
-    if(node == parentNode){//현재 노드가 루트 노드인지 확인.., node == parentNode로 할 수도 있음
-	    BNodePtr new_parent_node = CreateTree(node->order); // 중앙값 가지고 새 부모 노드 만들기
-        new_parent_node->is_leaf = 0;
-        new_parent_node->key[0] = middleKey;
-        new_parent_node->child[0] = node; // 새부모노드의 왼쪽 자식은 현재 노드
-        new_parent_node->child[1] = right_node;
-        new_parent_node->size = 2;
-        return new_parent_node; 
-    }else{
-        for (int i= keysLength(parentNode); i> pos; i--){ // 부모 노드에 넣어야되니까 거기있던 키 배치 다시하기
-            parentNode->key[i] = parentNode->key[i-1];
-            parentNode->child[i+1] = parentNode->child[i];
+    for(int i = middle_pos+1; i < len; i++){//full해져있으니 length가 order와 같아져 있을 것임, 그래도 코드상 length를 사용하겠다
+        right_node->key[i-(middle_pos + 1)] = node->key[i];
+        node->key[i] = 0;//right_node에 값 복사해주고 넘겨주었으니 0으로 초기화 한다.
+    }//key들은 다 옮겨 준 상태, leaf이든 아니든 key들은 옮겨주어야함
+    node->key[middle_pos] = 0;//node의 length를 초기화 해준 뒤 중간값에 0으로 수정
+    if(!node->is_leaf){ //node가 leaf가 아니라면 child도 같이 옮겨주어야함
+        len = node->size;
+	for(int i = middle_pos+1; i < len ; i++){
+            right_node->child[i-(middle_pos+1)] = node->child[i];//child도 middle_pos를 기준으로 오른쪽을 싹다 옮겨야함
+            right_node->size++;
+	    node->size--;//child는 size를 멤버변수로 갖고 있으니 따로 null 초기화 필요 없다.
         }
-
-        parentNode->key[pos]= middleKey; // 부모 노드에 넣어야될 자리에 값 넣기
-        parentNode-> child[pos+1] = right_node; // 왼쪽 노드는 원래 연결되어있으니 오른쪽만 부모노드에 연결.
-        parentNode->size++;
+    }
+    
+    if(parent_node == node){//현 node 위치가 root일 때. 처음 insertkey를 부를 떄, 부모 노드도 root로 초기화 해줬음, parent_pos는 0으로 해줬다.
+        BNodePtr new_root = CreateTree(node->order);
+        new_root->is_leaf = 0;//새로운 root이기 때문
+        new_root->key[0] = middleKey;
+	new_root->child[0] = node;
+	new_root->child[1] = right_node;
+	new_root->size = 2;
+	return new_root;
+    }else{//parent node에 split되서 나오는 middleKey를 꽂고, parent_pos기준 하나 오른쪽 child에 right_child를 꽂는다
+        len = keysLength(parent_node);
+	    for(int i = len; i > parent_pos; i--){//parent_pos를 기준으로 오른쪽들을 싹 옮긴다, 이 때, 한칸씩 옮기는 작업은 child와 동향이 겹침
+            parent_node->key[i] = parent_node->key[i-1];
+            parent_node->child[i+1] = parent_node->child[i];
+        }
+	parent_node->key[parent_pos] = middleKey;
+    	parent_node->child[parent_pos+1] = right_node;
+    	parent_node->size++;
     }
     return node;
 }
-BNodePtr insertNode(int parent_pos, int key, BNodePtr node, BNodePtr parentNode){
-    int pos; // 현재 노드에서 키의 위치를 갖고 있어야 함. 왜냐면 넣으려고 하는 값의 위치를 찾아야 하기 때문.
-    for (pos =0; pos < keysLength(node); pos++ ) {// pos 위치는 0부터 해서, 현재 노드의 키 개수만큼 탐색
-	    if (key< node->key[pos]){ // val이 node의 pos번째 키보다 작으면 그 pos에서 멈춘다.
-            break;
+BNodePtr insertKey(int parent_pos, BNodePtr parent_node, BNodePtr node, int key){
+    int node_pos;
+    for(node_pos = 0; node_pos < keysLength(node); node_pos++){
+        if(key < node->key[node_pos]) break;
+    }//if문에 걸렸다면 멈춘 keyPos위치가 들어가야 할 위치, if문 안들어간채로 나왔다면 제일 끝에 key가 들어가는 것
+    if(node->is_leaf){
+        for(int i = keysLength(node); i > node_pos; i-- ){//끝에서부터 옮겨야 하니 i를 key배열의 끝에서부터 시작하는게 좋다.
+            node->key[i] = node->key[i-1];//leaf니깐 child는 안옮겨줘도됨
         }
+        node->key[node_pos] = key;//key삽입!!!!!!!!!!!!!!!!!!!!!!!!!!
+    }else{//node가 leaf가 아닐때, 다시 이동
+        node->child[node_pos] = insertKey(node_pos, node, node->child[node_pos], key);//node로 해도 되지만 node부터 찾아가는 수고를 또 할 필요가 없다
     }
-    
-    if(node->is_leaf==0){
-        node->child[pos] = insertNode(pos, key, node->child[pos], node);
-        if (keysLength(node) == node->order){ // 현재 노드 키 개수가 규칙에서 벗어날거같으면
-            node = split(parent_pos, node, parentNode); // 윗 방향으로 분리를 해야 함.
-        }
-    }else{
-        for(int i = keysLength(node); i > pos; i--){
-            node->key[i] = node->key[i-1];
-            //node->child[i+1] = node->child[i];//leaf인데 옮기는 이유가 뭐지
-        }//수정해볼만함
-        node->key[pos] = key;
-        if(keysLength(node) == node->order){
-            node = split(parent_pos, node, parentNode);//pos인것 같은데
-        }
+
+    if(keysLength(node) == node->order){//nodeSplit은 leaf든 아니든 검사하고 full하다면 해야함, 검사하는건 return 바로 위에서 해주어 root까지 올라가는 모든 node를 검사한다.
+            node = split(parent_pos, parent_node, node);//parent_pos만으론 parent를 이용할 수 없음, 파라미터로 넘겨주어야함, split에 key는 필요없음(key배열에 middlekey도 있기 때문)
     }
-    return node;//재귀할 떄 필요한 return
+    return node;//node가 leaf일때만 여기에 도달할 수 있음, leaf일땐 split도 필요하면 하고 왔겠다, 이제 재귀를 통해 검사하며 split 필요한 부분은 하면 됨.
 }
 void Insert(BNodePtr* root, int key){
-
-    *root = insertNode(0, key, *root, *root);
+    *root = insertKey(0, *root, *root, key); //부모도 root로 한다
 }
+
+
 /*
 Find node that has key in BTree
 key: the key value in BTree node 
 */
 int Find(BNodePtr root, int key){
-    for(int i = 0; i < keysLength(root); i++){
-        if(root->is_leaf == 0){
-            if(key < root->key[i]) return Find(root->child[i], key);
-            else if(key == root->key[i]) return 1;
-            if(i == keysLength(root)-1) return Find(root->child[i+1], key);
-        }else{
-            if(key == root->key[i]) return 1;
-        }
-    }
-    return 0;
+    int pos;
+    for(pos = 0; pos < keysLength(root); pos++){//모든 키를 대상으로 비교함
+        if(root->key[pos] == key) return 1;
+        if(key < root->key[pos]) break;
+    }//for문을 나온다면 pos는 마지막 child를 가리키는 index가 된다
+    
+    if(!root->is_leaf) return Find(root->child[pos], key);
+    else return 0;//leaf인데도 1이 return되지 않고 여기까지 온거면 그건 못 찾은거다
 }
 
 /* 
 Print Tree, inorder traversal 
 */
 void PrintTree(BNodePtr root){
-	if(!root) return;
-    if(root->is_leaf == 0){
-    	for(int i = 0; i < root->size; i++){
-            PrintTree(root->child[i]);
-	    if(i < keysLength(root)) fprintf(fout, "%d ", root->key[i]);
-	    continue;
-        }
-    }else{
+    for(int i = 0; i < root->size; i++){//leaf면 root->size가 0이라 못 들어감
+        PrintTree(root->child[i]);
+        if(i < keysLength(root)) fprintf(fout, "%d ", root->key[i]);//밑에 for문으로 
+    }
+    if(root->is_leaf){//leaf일 때만 실행, 외의 노드는 위의 반복문에서 찍어질 것이기 때문이다.)
         for(int j = 0; j < keysLength(root); j++){
             fprintf(fout, "%d ", root->key[j]);
         }
@@ -205,15 +187,11 @@ void PrintTree(BNodePtr root){
 Free memory, delete a BTree completely 
 */
 void DeleteTree(BNodePtr root){
-    for(int i = 0; i < root->size; i++){
-            //printf("%d r-s%d\n ", root->key[0], root->size);
-	    DeleteTree(root->child[i]);
-	    continue;
+    for(int i = 0; i < root->size; i++){//leaf면 root->size가 0이라 못 들어감
+        DeleteTree(root->child[i]);
+        //if(i == root->size-1) return;//마지막 child를 삭제하고 재귀되어 올라왔는데 for문이 끝나 현재 root가 밑에서 free되면 안됨.
     }
-    if(!root) return;
-    printf("%d r-s%d\n ", root->key[0], root->size);
     free(root);
-   
 }
 
 int keysLength(BNodePtr root){
