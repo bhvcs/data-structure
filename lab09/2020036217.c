@@ -67,7 +67,6 @@ int main(int argc, char* argv[]){
     }
    
     DeleteTree(root);
-    PrintTree(root);
     fclose(fin);
     fclose(fout);
 
@@ -84,9 +83,10 @@ BNodePtr CreateTree(int order){
     BNodePtr bNode = (BNodePtr)malloc(sizeof(BNode));
     bNode->order = order;
     bNode->size = 0;//최소 두개부터니깐
-    bNode->child = (BNodePtr*)malloc(sizeof(struct BNode) * (order+1));
+    bNode->child = (BNodePtr*)malloc(sizeof(BNodePtr) * (order+1));
     bNode->key = (int*)malloc(sizeof(int) * order);//key는 최대 m-1개, insert의 편의를 위해 하나 늘림
     bNode->is_leaf = 1;
+    return bNode;
 }
 
 /*
@@ -99,7 +99,7 @@ BNodePtr split(int pos, BNodePtr node, BNodePtr parentNode){
     right_node->is_leaf = node->is_leaf;
     right_node->size = 0;
     right_node->order = node->order;
-    right_node->child = (BNodePtr*)malloc(sizeof(BNode) * (node->order+1));
+    right_node->child = (BNodePtr*)malloc(sizeof(BNodePtr) * (node->order+1));
     right_node->key = (int*)malloc(sizeof(int) * node->order);
     
     int len = keysLength(node);
