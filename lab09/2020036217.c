@@ -177,7 +177,7 @@ void PrintTree(BNodePtr root){
     if(!root->is_leaf){
     	for(int i = 0; i < root->size; i++){//모든 child를 들어갈 것이다
      	    PrintTree(root->child[i]);
-        	if(i < keysLength(root)) fprintf(fout, "%d ", root->key[i]);//밑 for문 삭제하고 올라와서 삭제
+        	if(i < keysLength(root)) fprintf(fout, "%d ", root->key[i]);//밑 for문 출력하고 올라와서 출력
     	}
     }
     if(root->is_leaf){//leaf일 때만 실행, 외의 노드는 위의 반복문에서 찍어질 것이기 때문이다.)
@@ -190,11 +190,11 @@ void PrintTree(BNodePtr root){
 /*
 Free memory, delete a BTree completely 
 */
-void DeleteTree(BNodePtr root){
+void DeleteTree(BNodePtr root){//leaf일 때까지 내려가서 자식들 다 삭제하면 부모로 가서 삭제하고, root까지 올라간다
     if(root == NULL) return;
     if(!root->is_leaf){
-    	for(int i = 0; i < root->size; i++){//leaf면 root->size가 0이라 못 들어감
-            DeleteTree(root->child[i]);
+    	for(int i = 0; i < root->size; i++){
+		DeleteTree(root->child[i]);
     	}
     }
     free(root->child);
@@ -202,7 +202,7 @@ void DeleteTree(BNodePtr root){
     free(root);
 }
 
-int keysLength(BNodePtr root){
+int keysLength(BNodePtr root){//key의 개수를 세어주는 함수를 생성했다, 0보다 큰 값들만 센다.
     int length = 0;
     for(int i = 0; i < root->order; i++){
         if(root->key[i] > 0) length++;
