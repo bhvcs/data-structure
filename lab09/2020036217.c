@@ -66,7 +66,7 @@ int main(int argc, char* argv[]){
     DeleteTree(root);
     fclose(fin);
     fclose(fout);
-
+				
     return 0;
 }
 
@@ -79,8 +79,8 @@ return:
 BNodePtr CreateTree(int order){
     BNodePtr bNode = (BNodePtr)malloc(sizeof(BNode));
     bNode->order = order;
-    bNode->size = 0;//최소 두개부터니깐
-    bNode->child = (BNodePtr*)malloc(sizeof(BNodePtr) * (order+1));
+    bNode->size = 1;//최소 두개부터니깐
+    bNode->child = (BNodePtr*)malloc(sizeof(BNodePtr) * (order+1));//split할 때 편의상 +1로 해놓음
     bNode->key = (int*)malloc(sizeof(int) * order);//key는 최대 m-1개, insert의 편의를 위해 하나 늘림
     bNode->is_leaf = 1;
     return bNode;
@@ -92,7 +92,8 @@ key: the key value in BTree node
 */
 BNodePtr split(int parent_pos, BNodePtr parent_node, BNodePtr node){
     int middle_pos = keysLength(node)/2, middleKey = node->key[middle_pos];
-    BNodePtr right_node = CreateTree(node->order);//CreateTree()의 order, key배열 동적할당, size, child할당이 같다.
+    BNodePtr right_node = CreateTree(node->order);//CreateTree()의 order, key배열 동적할당, child할당이 같다.
+    right_node->size = 0;//밑에서 child를 하나하나 채워주면서 증가시킬 것이다
     right_node->is_leaf = node->is_leaf;//split이 leaf에서만 일어나는 것은 아니니 1로 해서는 안된다.
     int len = keysLength(node);
     for(int i = middle_pos+1; i < len; i++){//full해져있으니 length가 order와 같아져 있을 것임, 그래도 코드상 length를 사용하겠다
@@ -115,7 +116,7 @@ BNodePtr split(int parent_pos, BNodePtr parent_node, BNodePtr node){
         new_root->key[0] = middleKey;
 	new_root->child[0] = node;
 	new_root->child[1] = right_node;
-	new_root->size = 2;
+	new_root->size++;
 	return new_root;
     }else{//parent node에 split되서 나오는 middleKey를 꽂고, parent_pos기준 하나 오른쪽 child에 right_child를 꽂는다
         len = keysLength(parent_node);
@@ -172,9 +173,12 @@ int Find(BNodePtr root, int key){
 Print Tree, inorder traversal 
 */
 void PrintTree(BNodePtr root){
-    for(int i = 0; i < root->size; i++){//leaf면 root->size가 0이라 못 들어감
-        PrintTree(root->child[i]);
-        if(i < keysLength(root)) fprintf(fout, "%d ", root->key[i]);//밑에 for문으로 
+    if(root == NULL) return;
+    if(!root->is_leaf){
+    	for(int i = 0; i < root->size; i++){//모든 child를 들어갈 것이다
+     	    PrintTree(root->child[i]);
+        	if(i < keysLength(root)) fprintf(fout, "%d ", root->key[i]);//밑 for문 삭제하고 올라와서 삭제
+    	}
     }
     if(root->is_leaf){//leaf일 때만 실행, 외의 노드는 위의 반복문에서 찍어질 것이기 때문이다.)
         for(int j = 0; j < keysLength(root); j++){
@@ -187,10 +191,14 @@ void PrintTree(BNodePtr root){
 Free memory, delete a BTree completely 
 */
 void DeleteTree(BNodePtr root){
-    for(int i = 0; i < root->size; i++){//leaf면 root->size가 0이라 못 들어감
-        DeleteTree(root->child[i]);
-        //if(i == root->size-1) return;//마지막 child를 삭제하고 재귀되어 올라왔는데 for문이 끝나 현재 root가 밑에서 free되면 안됨.
+    if(root == NULL) return;
+    if(!root->is_leaf){
+    	for(int i = 0; i < root->size; i++){//leaf면 root->size가 0이라 못 들어감
+            DeleteTree(root->child[i]);
+    	}
     }
+    free(root->child);
+    free(root->key);
     free(root);
 }
 
