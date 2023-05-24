@@ -26,22 +26,18 @@ int Dequeue(Queue* Q);
 void Enqueue(Queue* Q, int X);
 void DeleteQueue(Queue* Q);
 int* sorting(int* nodes, int n);
-void countInput(int* n, char* numbers){
-    char nums[100];
-    strcpy(nums, numbers);
-    char* ptr = strtok(nums, " ");
-    while(ptr != NULL){
-        (*n)++;
-        ptr = strtok(NULL, " ");
-    }
+
+void countInput(int* n, char* str) {
+	int len = strlen(str), i;
+	for (i = 0; i < len; i++)
+		if (0 <= str[i] - '0' && str[i] - '0' < 10) (*n)++;
 }
-void parseInput(int* nodes, char* numbers, int n){
-    char* ptr = strtok(numbers, " ");
-    int i = 0;
-    while(ptr != NULL){
-        nodes[i++] = atoi(ptr);
-        ptr = strtok(NULL, " ");
-    }
+
+void parseInput(int* arr, char* str, int n) {
+	int len = strlen(str), i;
+	int cnt = 0;
+	for (i = 0; i < len; i++)
+	if (0 <= str[i] - '0' && str[i] - '0' < 10) arr[cnt++] = str[i] - '0';
 }
 
 int main(int argc, char* agrv[]) {
@@ -209,7 +205,7 @@ return:
         1, empty
         0, non-empty
 */
-int IsEmpty(Queue* Q){
+int IsEmpty(Queue* Q){//비어있지 않다면 rear가 first보다 항상 크거나 같아야 한다
     return Q->rear < Q->first;
 }
 /*
@@ -239,7 +235,7 @@ void DeleteQueue(Queue* Q){
     free(Q);
 }
 
-int* sorting(int* nodes, int n){
+int* sorting(int* nodes, int n){//받은 노드를 오름차순 sort
     int min, temp;
     for(int i = 0; i < n-1; i++){
         min = i;
