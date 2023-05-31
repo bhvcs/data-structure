@@ -21,7 +21,6 @@ int Find(HashTable H, ElementType Key, int solution);
 void printTable(HashTable H);
 void deleteTable(HashTable H);
 int hashing(List* TheLists, int size, ElementType Key, int collide);
-void rearrageDel(List* TheLists, int size, ElementType Key, int pos);
 
 int main(int argc, char *argv[]){
 	fin = fopen(argv[1], "r");
@@ -32,9 +31,9 @@ int main(int argc, char *argv[]){
 	int solution, TableSize;
 
 	fscanf(fin, "%s", solution_str);
-	if(!strcmp(solution_str, "Linear"))
+	if(!strcmp(solution_str, "linear"))
 		solution = 1;
-	else if(!strcmp(solution_str, "Quadratic"))
+	else if(!strcmp(solution_str, "quadratic"))
 		solution = 2;
 	else{
 		fprintf(fout, "Error: Invalid hashing solution!");
@@ -49,7 +48,6 @@ int main(int argc, char *argv[]){
 	int key;
 	while(!feof(fin)){
 		fscanf(fin, "%c", &cv);
-		printf("%c", cv);
 		switch(cv){
 			case 'i':
 				fscanf(fin, "%d", &key);
@@ -90,7 +88,6 @@ HashTable createTable(int TableSize){
     HashTable newTable = (HashTable)malloc(sizeof(HashTbl));
     newTable->TableSize = TableSize;
     newTable->TheLists = (ElementType*)malloc(sizeof(ElementType)*TableSize);
-
     return newTable;
 }
 
@@ -104,24 +101,32 @@ print out :
 void Insert(HashTable H, ElementType Key, int solution){
 	int collide = 0, pos = 0;
 	for(;;){//Find를 활용하면 address를 찾을 수가 없다
-		if(solution == 1) pos = hashing(H->TheLists, H->TableSize, Key, collide);
-		else pos = hashing(H->TheLists, H->TableSize, Key, collide * collide);
+		if(solution == 1) {
+			pos = hashing(H->TheLists, H->TableSize, Key, collide);
+			if(collide >= H->TableSize){
+				fprintf(fout, "Insertion error : table is full\n");
+				return;
+			}
+		}
+		else {
+			pos = hashing(H->TheLists, H->TableSize, Key, collide * collide);
+			if(collide >= H->TableSize / 2){ //못찾았고 table size의 절반 이상 탐색했을 때 그만 탐색해야함
+				fprintf(fout, "Insertion error : table is full\n");
+				return;
+			}
+		}
 		//hashing하고 와서 pos에 반환값 저장
 		if(H->TheLists[pos] == 0) break;//완전히 빈 경우
 		else if(pos > 0 && H->TheLists[pos] == Key){//대상을 찾은 경우
-			fprintf(fout, "insertion error : %d already exists at address %d\n", Key, pos);
+			fprintf(fout, "Insertion error : %d already exists at address %d\n", Key, pos);
 			return;
 		}else if(H->TheLists[pos] == -2){//Del값인 경우
 			break; //반복문을 빠져 나가서 삽입 동작이 이루어지면 된다
 		}
-		else if(collide >= H->TableSize / 2){ //못찾았고 table size의 절반 이상 탐색했을 때 그만 탐색해야함
-			fprintf(fout, "insertion error : table is full\n");
-			return;
-		}
 		else collide++;
 	}
 	H->TheLists[pos] = Key;//비었을 때 삽입
-	fprintf(fout, "insert %d into address %d\n", Key, pos);
+	fprintf(fout, "Insert %d into address %d\n", Key, pos);
 }
 /*
 Delete the key in hash table with given solution (linear or quadratic).
@@ -145,14 +150,6 @@ void Delete(HashTable H, ElementType Key, int solution){
 	}
 	fprintf(fout, "Deletion Error: %d is not in the table\n", Key);
 }
-void rearrageDel(List* TheLists, int size, ElementType Key, int pos){//왜한거지 시@발
-	if(pos == size -1) return;//마지막 원소면 재조정할 필요 없음, seg fault를 예방해 배열의 크기를 고려하도록 함
-	else if(Key % size == TheLists[pos+1] % size){//del이 있는 index가 비교 기준이 되어선 안됨 (원래 그 자리에 있어야 하는 값일 수도 있기 때문이다)
-		TheLists[pos] = TheLists[pos+1];
-		TheLists[pos+1] = -2;
-		return rearrageDel(TheLists, size, Key, pos+1);//이젠 pos+1이 del임
-	}else return;//위 조건에 해당되지 않는다면 조정할 필요 없는 것이다.
-}
 /*
 Find the Key from hash table with given solution (linear or quadratic).
 return:
@@ -174,11 +171,6 @@ int hashing(List* TheLists, int size, ElementType Key, int collide){//Del을 다
 	int i = collide;
 	int pos = (Key%size + i) % size;
 	return pos;
-	/*if(TheLists[pos] == 0){//비어있는 경우가 생기는 순간, 그냥 없는 것이다
-		return -1;
-	}else{//비어있지 않은 경우 (Key와 같은 경우||Del인 경우 || 다른 경우)
-		return pos;
-	}*/
 }//insert의 작동방식이 find, delete와는 달라 반복문으로 설계함
 
 /*
@@ -188,17 +180,15 @@ print out the key values ​​in the Hash Table in the order of index in the Ha
 	Non empty Hash Table print : "%d "
 */
 void printTable(HashTable H){
-	//printf("%d", H->TableSize);
 	for(int i = 0; i < H->TableSize; i++){
 		if(H->TheLists[i] > 0) fprintf(fout, "%d ", H->TheLists[i]);//양수 일 떄만 저장된 값 출력
 		else fprintf(fout, "0 ");
 	}
-	//printf("???");
 }
 /*
 delete Table 
 */
 void deleteTable(HashTable H){
-
+	free(H->TheLists);
 	free(H);
 }
