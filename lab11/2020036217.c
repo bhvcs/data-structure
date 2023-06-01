@@ -103,22 +103,18 @@ void Insert(HashTable H, ElementType Key, int solution){
 	for(;;){//Find를 활용하면 address를 찾을 수가 없다
 		if(solution == 1) {
 			pos = hashing(H->TheLists, H->TableSize, Key, collide);
-			if(collide >= H->TableSize){
-				fprintf(fout, "Insertion error : table is full\n");
-				return;
-			}
 		}
 		else {
 			pos = hashing(H->TheLists, H->TableSize, Key, collide * collide);
-			if(collide >= H->TableSize / 2){ //못찾았고 table size의 절반 이상 탐색했을 때 그만 탐색해야함
-				fprintf(fout, "Insertion error : table is full\n");
-				return;
-			}
 		}
 		//hashing하고 와서 pos에 반환값 저장
+		if(collide > H->TableSize){ //못찾았고 table size 이상 탐색했을 때 그만 탐색해야함
+			fprintf(fout, "insertion error : table is full\n");
+			return;
+		}
 		if(H->TheLists[pos] == 0) break;//완전히 빈 경우
 		else if(pos > 0 && H->TheLists[pos] == Key){//대상을 찾은 경우
-			fprintf(fout, "Insertion error : %d already exists at address %d\n", Key, pos);
+			fprintf(fout, "insertion error : %d already exists at address %d\n", Key, pos);
 			return;
 		}else if(H->TheLists[pos] == -2){//Del값인 경우
 			break; //반복문을 빠져 나가서 삽입 동작이 이루어지면 된다
@@ -126,7 +122,7 @@ void Insert(HashTable H, ElementType Key, int solution){
 		else collide++;
 	}
 	H->TheLists[pos] = Key;//비었을 때 삽입
-	fprintf(fout, "Insert %d into address %d\n", Key, pos);
+	fprintf(fout, "insert %d into address %d\n", Key, pos);
 }
 /*
 Delete the key in hash table with given solution (linear or quadratic).
@@ -143,12 +139,12 @@ void Delete(HashTable H, ElementType Key, int solution){
 		if(H->TheLists[pos] == 0) break;//완전히 비어있는 경우
 		else if(pos > 0 && H->TheLists[pos] == Key){//대상을 찾은 경우, Del값을 준다
 			H->TheLists[pos] = -2;
-			fprintf(fout, "Delete %d\n", Key);
+			fprintf(fout, "delete %d\n", Key);
 			return;
 		}
 		else collide++;//pos가  -3 즉 해당 키와 다르다 (다만 pos가 -1이어도 결국 돌아가서 끝나게 됨 collide가 증가되는 부분을 타고 올라가야 되는게 보기엔 안 좋다)
 	}
-	fprintf(fout, "Deletion Error: %d is not in the table\n", Key);
+	fprintf(fout, "deletion error: %d is not in the table\n", Key);
 }
 /*
 Find the Key from hash table with given solution (linear or quadratic).
@@ -184,6 +180,7 @@ void printTable(HashTable H){
 		if(H->TheLists[i] > 0) fprintf(fout, "%d ", H->TheLists[i]);//양수 일 떄만 저장된 값 출력
 		else fprintf(fout, "0 ");
 	}
+	fprintf(fout, "\n");
 }
 /*
 delete Table 
