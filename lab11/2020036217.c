@@ -132,7 +132,7 @@ print out :
 */
 void Delete(HashTable H, ElementType Key, int solution){
 	int collide = 0, pos = 0, m = H->TableSize;
-	while(collide <= m / 2){//while문이 끝나기 위해선 pos가 -1 or == Key여야 한다, collide가 H->TableSize를 넘어가면 더 탐색할 필요 없다(확인한 부분만 계속 확인)
+	while(collide <= m){//while문이 끝나기 위해선 pos가 -1 or == Key여야 한다, collide가 H->TableSize를 넘어가면 더 탐색할 필요 없다(확인한 부분만 계속 확인)
 		if(solution == 1) pos = hashing(H->TheLists, m, Key, collide);
 		else pos = hashing(H->TheLists, m, Key, collide * collide);
 
@@ -154,7 +154,7 @@ return:
 */
 int Find(HashTable H, ElementType Key, int solution){
 	int collide = 0, pos = 0;
-	while(collide <= H->TableSize / 2){
+	while(collide <= H->TableSize){
 		if(solution == 1) pos = hashing(H->TheLists, H->TableSize, Key, collide);
 		else pos = hashing(H->TheLists, H->TableSize, Key, collide * collide);
 		if(H->TheLists[pos] == 0) break;//완전히 비어있는 경우
