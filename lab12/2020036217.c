@@ -84,12 +84,12 @@ Initial prev: -1
 Graph* createGraph(int size) {
     Graph* g = (Graph*)malloc(sizeof(Graph));
     g->size = size-1;
-    g->vertices = (int**)malloc(sizeof(int*) * size);
+    g->vertices = (int**)malloc(sizeof(int*) * size);//index가 1부터 시작
     for(int i = 0; i < size; i++){
         g->vertices[i] = (int*)malloc(sizeof(int) * size);
     }
     g->nodes = (Node*)malloc(sizeof(Node) * size);
-    for(int i = 1; i < size; i++){
+    for(int i = 1; i < size; i++){//처음 상태 초기화
         g->nodes[i].vertex = i;
         g->nodes[i].dist = INF;
         g->nodes[i].prev = -1;
@@ -129,7 +129,7 @@ void dijkstra(Graph* g){
     int start = 1, pos;
     Heap* minHeap = createMinHeap(g->size);
     Node min;
-    insertToMinHeap(minHeap, g->nodes[start].vertex, g->nodes[start].dist);
+    insertToMinHeap(minHeap, g->nodes[start].vertex, g->nodes[start].dist);//start를 넣어놓고 시작
     while(minHeap->Size > 0){
         min = deleteMin(minHeap);//현 위치에서 dist가 가장 작은 곳으로 간것이다. 현 위치가 여기로 바뀐것이다.
         start = min.vertex;
@@ -143,9 +143,10 @@ void dijkstra(Graph* g){
             }
         }
     }
+    deleteMinHeap(minHeap);
 }
 int Find(Heap* minHeap, int vertex){
-    for(int i = 1; i <= minHeap->Size; i++){
+    for(int i = 1; i <= minHeap->Size; i++){//minHeap에서 위치 찾기
         if(minHeap->Element[i].vertex == vertex){
             return i;
         }
@@ -161,7 +162,7 @@ and the number of node(g->size) is 5,
 you must return [3, 2, 1 , 0, 0]
 If there is no path, return NULL 
 */
-int* shortestPath(Graph* g, int dest){
+int* shortestPath(Graph* g, int dest){//prev를 따라가면 shortestPath
     int i = 0;
     int* path = (int*)malloc(sizeof(int) * g->size);
     path[i++] = dest;
@@ -179,7 +180,7 @@ int* shortestPath(Graph* g, int dest){
 /*
 Insert Node with vertex and distance into minHeap
 */
-void insertToMinHeap(Heap* minHeap, int vertex, int distance) {//TODO: prev는 어찌 할것인가
+void insertToMinHeap(Heap* minHeap, int vertex, int distance) {
     Node* newNode = (Node*)malloc(sizeof(Node));
     newNode->vertex = vertex;
     newNode->dist = distance;
@@ -193,7 +194,7 @@ pop the Node with minimum distance from minHeap
 return:
 	Node with minimum distance
 */
-Node deleteMin(Heap *minHeap) {
+Node deleteMin(Heap *minHeap) {//왼쪽 오른쪽 child와 마지막 leaf노드 세개를 비교하며 내려가기
     int i, child;
     int lastPos = minHeap->Size--;
     for(i = 1; i * 2 <= minHeap->Size; i = child){
