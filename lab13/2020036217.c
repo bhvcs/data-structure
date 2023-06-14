@@ -84,7 +84,7 @@ int Partition(Array* array, int left, int right){
     int i = left-1, j = right;//i는 왼쪽에서부터, j는 오른쪽에서부터 check한다
     for(;;){
         while(array->values[++i] < pivot);//비교하고 나서 넘어가면 안되니깐 ++가 선행되어야 함
-        while(j >= left && array->values[--j] > pivot);//i는 pivot보다 작은 것, j는 큰 것을 보면 넘어가게 되면서 i와 j에 해당하는 element를 바꿔야 하는 상황이 올때까지 진행된다
+        while(j >= left && array->values[--j] >= pivot);//i는 pivot보다 작은 것, j는 큰 것을 보면 넘어가게 되면서 i와 j에 해당하는 element를 바꿔야 하는 상황이 올때까지 진행된다
         if( i < j){//i가 j보다 작은 상태에서 멈췄다는 것은 그냥 바꿔야 하는 상황이 온 것임
             swap(&array->values[i], &array->values[j]);
             PrintArray(array, left, right);
